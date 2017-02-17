@@ -1,0 +1,31 @@
+#include "base.h" 
+
+_base::_base(){
+
+	_cub cubo(3);
+
+	}
+  _base(int n_cubos){
+		for(int i=0;i<n_cubos;i++){
+			_c
+		}
+	}
+
+	void _base::_base dibujarBase(int n_cubos){
+		glBegin();
+		glPush();
+			glScale(2.0,0.3,0.0);
+		glPop();//Pintamos la base de la estructura
+		glPush();
+		for(int i=1;i<=n_cubos;i++){
+					glTraslate(0.0,i*2.0,0.0);
+		}
+		glPop();//pintamos los cubos
+		glPush();
+		glPush();
+			glScale(0.5,0.3,0.0);
+			glTraslate(0.0,8.0,0.0)
+		glPop();
+		
+
+	}

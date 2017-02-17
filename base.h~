@@ -1,0 +1,10 @@
+#include "objetos.h"
+class _base: public _triangulos3D
+{
+private:
+  static int num_cub=10;
+public:
+  _base();
+  _base(int n_cubos);
+	void dibujarBase(int n_cubos);
+};

@@ -1,0 +1,320 @@
+//**************************************************************************
+// Práctica 1 usando objetos
+//**************************************************************************
+
+#include "objetos.h"
+
+
+//*************************************************************************
+// _puntos3D
+//*************************************************************************
+
+_puntos3D::_puntos3D()
+{
+
+}
+
+//*************************************************************************
+// dibujar puntos
+//*************************************************************************
+
+void _puntos3D::draw_puntos(float r, float g, float b, int grosor)
+{
+  int num_ver=vertices.size();
+  _vertex3f nodo;
+  glPointSize(grosor);
+  glColor3f(r,g,b);
+  glBegin(GL_POINTS);
+
+    for(int i=0;i<num_ver;i++){
+        nodo=vertices.at(i);//asigno el vertex3f de la posicion iesima del vector y pinto sus coordenadas
+        glVertex3f(nodo.x,nodo.y,nodo.z);
+        cout<<"ind_ver: "<<i<<endl;
+        cout<<" x: "<<nodo.x<<" y: "<<nodo.y<<" z: "<<nodo.z<<endl;
+
+      }
+  glEnd();
+  }
+
+
+
+
+//*************************************************************************
+// _triangulos3D
+//*************************************************************************
+
+_triangulos3D::_triangulos3D()
+{
+
+
+}
+
+
+//*************************************************************************
+// dibujar en modo arista
+//*************************************************************************
+
+void _triangulos3D::draw_aristas(float r, float g, float b, int grosor)
+{
+  _vertex3f ind_ver;
+  int num_car=caras.size();
+  //glLineWidth(grosor);
+  glColor3f(r,g,b);
+  glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
+  glBegin(GL_TRIANGLES);
+    for(int i=0;i<num_car;i++){
+    //  cout<<"cara de: "<<i<<endl;
+    //  cout<<caras.at(i).x<<" "<<caras.at(i).y<<" "<<caras.at(i).z<<endl;
+      for(int j=0;j<3;j++){
+        if(j==0){
+          ind_ver=vertices.at(caras.at(i).x);
+        }else {
+          if(j==1)
+                ind_ver=vertices.at(caras.at(i).y);
+
+            else {
+                  if(j==2)
+                  ind_ver=vertices.at(caras.at(i).z);
+                }
+          }
+
+        glVertex3f(ind_ver.x,ind_ver.y,ind_ver.z);
+
+      //  cout<<" x: "<<ind_ver.x<<" y: "<<ind_ver.y<<" z: "<<ind_ver.z<<endl;
+
+      }
+
+    }
+  glEnd();
+}
+
+//*************************************************************************
+// dibujar en modo sólido
+//*************************************************************************
+
+void _triangulos3D::draw_solido(float r, float g, float b)
+{
+  _vertex3f ind_ver;
+  int num_car=caras.size();
+  glColor3f(r,g,b);
+  //glCullFace(GL_BACK);
+  glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
+  glBegin(GL_TRIANGLES);
+    for(int i=0;i<num_car;i++){
+      for(int j=0;j<3;j++){
+        if(j==0)
+          ind_ver=vertices.at(caras.at(i).x);
+          else if(j==1)
+                ind_ver=vertices.at(caras.at(i).y);
+            else if(j==2)
+                  ind_ver=vertices.at(caras.at(i).z);
+
+        glVertex3f(ind_ver.x,ind_ver.y,ind_ver.z);
+
+      }
+
+    }
+  glEnd();
+}
+
+//*************************************************************************
+// dibujar en modo sólido con apariencia de ajedrez
+//*************************************************************************
+
+void _triangulos3D::draw_solido_ajedrez(float r1, float g1, float b1, float r2, float g2, float b2)
+{
+  _vertex3f ind_ver;
+  int num_car=caras.size();
+  glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
+  glBegin(GL_TRIANGLES);
+    for(int i=0;i<num_car;i++){
+        if(i%2==0)
+          glColor3f(r1,g1,b1);
+        else
+          glColor3f(r2,g2,b2);
+      for(int j=0;j<3;j++){
+        if(j==0)
+          ind_ver=vertices.at(caras.at(i).x);
+          else if(j==1)
+                ind_ver=vertices.at(caras.at(i).y);
+            else if(j==2)
+                  ind_ver=vertices.at(caras.at(i).z);
+
+        glVertex3f(ind_ver.x,ind_ver.y,ind_ver.z);
+       
+
+      }
+
+    }
+  glEnd();
+}
+
+
+
+//*************************************************************************
+// clase cubo
+//*************************************************************************
+
+_cubo::_cubo(float tam)
+{
+  _vertex3f nodo;
+  //v0
+    nodo.x=-tam/2.0;
+    nodo.y=-tam/2.0;
+    nodo.z=-tam/2.0;
+    vertices.push_back(nodo);
+    //v1
+    nodo.x=tam/2.0;
+    nodo.y=-tam/2.0;
+    nodo.z=-tam/2.0;
+    vertices.push_back(nodo);
+    //v2
+    nodo.x=tam/2.0;
+    nodo.y=tam/2.0;
+    nodo.z=-tam/2.0;
+    vertices.push_back(nodo);
+    //v3
+    nodo.x=-tam/2.0;
+    nodo.y=tam/2.0;
+    nodo.z=-tam/2.0;
+    vertices.push_back(nodo);
+    //v4
+    nodo.x=-tam/2.0;
+    nodo.y=-tam/2.0;
+    nodo.z=tam/2.0;
+    vertices.push_back(nodo);
+    //v5
+    nodo.x=tam/2.0;
+    nodo.y=-tam/2.0;
+    nodo.z=tam/2.0;
+    vertices.push_back(nodo);
+   //v6
+    nodo.x=tam/2.0;
+    nodo.y=tam/2.0;
+    nodo.z=tam/2.0;
+    vertices.push_back(nodo);
+    //v7
+    nodo.x=-tam/2.0;
+    nodo.y=tam/2.0;
+    nodo.z=tam/2.0;
+    vertices.push_back(nodo);
+
+
+    _vertex3i face;
+    //cara 0 Fondo horario
+      face.x=1;
+      face.y=0;
+      face.z=3;
+      caras.push_back(face);
+      //cara 1 fondo horario
+      face.x=1;
+      face.y=3;
+      face.z=2;
+      caras.push_back(face);
+      //cara2 frontal antihorario
+      face.x=4;
+      face.y=5;
+      face.z=6;
+      caras.push_back(face);
+      //cara3 frontal antihorario
+      face.x=4;
+      face.y=6;
+      face.z=7;
+      caras.push_back(face);
+      //cara4 lat. izq horario
+      face.x=0;
+      face.y=4;
+      face.z=7;
+      caras.push_back(face);
+      //caras5 lat. izq horario
+      face.x=0;
+      face.y=7;
+      face.z=3;
+      caras.push_back(face);
+      //caras6 lat.dcho antihorario
+      face.x=1;
+      face.y=2;
+      face.z=5;
+      caras.push_back(face);
+      //caras7 lat. dcho antihorario
+      face.x=5;
+      face.y=2;
+      face.z=6;
+      caras.push_back(face);
+      //caras8 sup antihorario
+      face.x=7;
+      face.y=6;
+      face.z=2;
+      caras.push_back(face);
+      //caras9 sup antihorario
+      face.x=7;
+      face.y=2;
+      face.z=3;
+      caras.push_back(face);
+      //caras10 antihorario
+      face.x=0;
+      face.y=1;
+      face.z=5;
+      caras.push_back(face);
+      //caras11 inf antihorario
+      face.x=4;
+      face.y=0;
+      face.z=5;
+      caras.push_back(face);
+}
+
+
+//*************************************************************************
+// clase piramide
+//*************************************************************************
+
+_piramide::_piramide(float tam, float al)
+{
+  _vertex3f nodo;
+  //v0
+
+  nodo.x=0.0;
+  nodo.y=0.0;
+  nodo.z=0.0;
+  vertices.push_back(nodo);
+
+  //v1
+  nodo.x=tam;//x
+  nodo.y=0.0;//y
+  nodo.z=0.0;//z
+  vertices.push_back(nodo);
+  //v2
+  nodo.x=tam/2.0;
+  nodo.y=al;
+  nodo.z=tam/2.0;
+  vertices.push_back(nodo);
+  //v3
+  nodo.x=tam/2.0;
+  nodo.y=0.0;
+  nodo.z=tam;
+  vertices.push_back(nodo);
+
+//caras------------------------
+    _vertex3i face;
+    //cara 0 - antihorario fondo
+    face.x=0;
+    face.y=1;
+    face.z=3;
+    caras.push_back(face);
+    //cara1 horario dcha
+    face.x=1;
+    face.y=2;
+    face.z=3;
+    caras.push_back(face);
+
+    //cara2 frente horario
+    face.x=0;
+    face.y=2;
+    face.z=1;
+    caras.push_back(face);
+    //cara3
+    face.x=0;
+    face.y=3;
+    face.z=2;
+    caras.push_back(face);
+}

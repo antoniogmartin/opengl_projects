@@ -1,0 +1,547 @@
+//******************************************************************************
+// class to read ply files of triangles
+//
+// Domingo Martín Perandres (c) 2003-2013
+//
+// Gnu Public Licence
+// last update
+// 131019
+//******************************************************************************
+
+#include "file_ply_stl.h"
+
+//******************************************************************************
+//
+//******************************************************************************
+
+
+_file_ply::_file_ply()
+{
+_element_token_table Element1;
+const char* Text_tokens[]={"ply","format","ascii","element","vertex","face","end_header","zzzzzzzz",""};
+
+for (int i=0;i<_tokens(NUMBER);i++)
+	{
+	Element1.Text=Text_tokens[i];
+	Element1.Token=(_tokens) i;
+	Token_table.push_back(Element1);
+	}
+
+Debug=false;
+Buffer[0]='\0';
+Num_lines=0;
+}
+
+//******************************************************************************
+//
+//******************************************************************************
+
+int _file_ply::open(char *File_name)
+{
+
+if ((File=fopen(File_name,"r"))==NULL)
+	{
+	printf("Error: the file %s cannot be opened\n",File_name);
+	return(-1);
+	}
+return(0);
+}
+
+//******************************************************************************
+//
+//******************************************************************************
+
+int _file_ply::create(char *File_name)
+{
+
+if ((File=fopen(File_name,"w"))==NULL)
+	{
+	printf("Error: the file %s cannot be created\n",File_name);
+	return(-1);
+	}
+return(0);
+}
+
+//******************************************************************************
+//
+//******************************************************************************
+
+int _file_ply::read_line()
+{
+
+
+if (!feof(File))
+	{
+	fgets(Buffer,MAX_LENGTH_LINE,File);
+  if (strlen(Buffer)==0) return(-1);
+	Num_lines++;
+//  printf("%d:%s",Num_lines,Buffer);
+	return(0);
+	}
+return(-1);
+}
+
+//******************************************************************************
+//
+//******************************************************************************
+
+int _file_ply::next_token()
+{
+char Aux_token[100];
+char *Aux_token1;
+int Num_char=0;
+int Pos0;
+int Pos1;
+
+do{
+    if (strlen(Buffer)==0){
+        // leer una linea si no se ha leido antes
+		if (read_line()==-1) return(-1);
+        // si es un comentario lee la siguiente
+		while (Buffer[0]=='#') if (read_line()==-1) return(-1);
+		}
+    Aux_token1= strtok(Buffer," \t\n");
+    if (Aux_token1!=NULL){
+        strcpy(Aux_token,Aux_token1);
+        Num_char=strlen(Aux_token);
+//        strcpy(Buffer,Buffer+Num_char+1);
+        Pos0=Num_char+1;
+        Pos1=0;
+        while (Buffer[Pos0]!='\0'){
+          Buffer[Pos1++]=Buffer[Pos0];
+          Pos0++;
+        }
+        Buffer[Pos1++]='\0';
+//        printf("Buffer:%s\n",Buffer);
+    }
+    else{// por si hay delimitadores al final de una linea
+        Num_char=0;
+        Buffer[0]=0;
+    }
+
+	}
+while (Num_char==0);
+
+
+if (!is_number(Aux_token))
+	{
+//  printf("es un numero %s\n",Aux_token);
+	Yylval.Real=atof(Aux_token);
+	return((int)_tokens(NUMBER));
+	}
+else
+	{
+//  printf("es texto %s\n",Aux_token);
+	Yylval.Text=Aux_token;
+	return(search_token(Aux_token));
+	}
+}
+
+//******************************************************************************
+//
+//******************************************************************************
+
+int _file_ply::
+read(vector<_vertex3f> &Vertices,vector<_vertex3i> &Faces)
+{
+int Next_token,i=0,j=0,global=0;
+int Num_vertices,Num_faces;
+
+if (File!=NULL)
+	{
+	Next_token=next_token();
+	if (Next_token==PLY)
+		{
+		Next_token=next_token();
+		if (Next_token==FORMAT)
+			{
+			Next_token=next_token();
+			if (Next_token==ASCII)
+				{
+				Next_token=next_token();
+				if (Next_token==NUMBER)
+					{// head
+					Next_token=next_token();
+					while (Next_token!=END_HEADER)
+						{
+						if (Next_token==ELEMENT)
+							{
+							Next_token=next_token();
+							switch (Next_token)
+								{
+								case VERTEX:
+									Next_token=next_token();
+									if (Next_token==NUMBER)
+										{
+          					Num_vertices=(int) Yylval.Real;
+										Vertices.resize(Num_vertices);
+										}
+									else error("no number of vertex");
+									break;
+								case FACE:
+									Next_token=next_token();
+									if (Next_token==NUMBER)
+										{
+          					Num_faces=(int) Yylval.Real;
+										Faces.resize(Num_faces);
+										}
+									else error("no number of faces");
+									break;
+								default:
+									error("element type not supported");
+									break;
+								}
+							}
+						Next_token=next_token();
+						}
+					// data
+					// vertices data
+					for (i=0;i<Num_vertices;i++)
+						{// vertices data
+
+						for (j=0;j<3;j++)
+							{
+							Next_token=next_token();
+							if (Next_token==NUMBER)
+								{
+
+									if(j==0)
+										Vertices[i].x=Yylval.Real;
+									else if(j==1)
+													Vertices[i].y=Yylval.Real;
+												else if(j==2)
+													Vertices[i].z=Yylval.Real;
+
+								}
+							else{ error("no number for coordinate");}
+							}
+						}
+					// faces data
+					for (i=0;i<Num_faces;i++)
+						{
+						Next_token=next_token();
+						if (Next_token==NUMBER)
+							{
+							if ((int)Yylval.Real!=3) {
+								printf("Face=%d Token=%s\n",i,Yylval.Text.c_str());
+								error("only triangles supported");;
+								}
+							}
+						else error("no number of vertex indices");
+						for (j=0;j<3;j++)
+							{
+							Next_token=next_token();
+							if (Next_token==NUMBER)
+								{
+								if(j==0)
+									Faces[i].x=(int)Yylval.Real;
+								else if(j==1)
+												Faces[i].y=(int)Yylval.Real;
+											else if(j==2)
+												Faces[i].z=(int)Yylval.Real;
+								}
+							else{error("no number for coordinate,face");}
+							}
+						}
+					printf("File readed\n");
+					}
+				else error("no format number");
+				}
+			else error("no ascii format");
+			}
+		else error("no format word");
+		}
+	else error("this is not a ply file");
+	return(0);
+	}
+else
+	{
+	error("there is not a ply file open");
+	return(-1);
+	}
+}
+
+//******************************************************************************
+//
+//******************************************************************************
+
+//int _file_ply::write(vector<float> &Vertices,vector<int> &Faces)
+//{
+//    error("Not implemented");
+//    return(0);
+//}
+
+//******************************************************************************
+//
+//******************************************************************************
+
+int _file_ply::close()
+{
+
+fclose(File);
+return(0);
+}
+
+//******************************************************************************
+//
+//******************************************************************************
+
+void _file_ply::error(const char *Error)
+{
+
+printf("Error: %s. Stop in line %d\n",Error,Num_lines);
+exit(-1);
+}
+
+//******************************************************************************
+//
+//******************************************************************************
+
+int _file_ply::is_number(char *Aux_token)
+{
+char *p1;
+
+for (unsigned int i=0;i<strlen(Aux_token);i++)
+	{
+    if ((p1=strchr((char *)"0123456789.+-eE",Aux_token[i]))==NULL) return(-1);
+	}
+return(0);
+}
+
+//******************************************************************************
+//
+//******************************************************************************
+
+int _file_ply::search_token(char *Aux_token)
+{
+int i=0;
+
+while (!(Token_table[i].Text=="zzzzzzzz"))
+	{
+	//printf("Buscando token %d %s\n",i,Token_table[i].Text.c_str());
+	if (Token_table[i].Text==Aux_token) break;
+	i++;
+	}
+//getchar();
+return(i);
+}
+
+//CONSTRUYENDO OBJETO PLY
+_ply::_ply(){
+  build_ply();
+}
+
+void _ply::build_ply(){
+  string name_ply;
+  cout<<"Introduce el path del archivo ply\n";
+  cin>> name_ply;
+  char *path = new char[name_ply.length() + 1];
+  std::cout << name_ply << std::endl;
+  //conversion string-char*
+  strcpy(path, name_ply.c_str());
+  open(path);//si vale 0 es que se ha abierto el archivo en caso contrario -1;
+  read(vertices,caras);
+  delete [] path;
+  close();
+}
+
+//CONSTRUYENDO OBJETO PLY REVOLUCIONADO
+_obj_revolucion::_obj_revolucion(){
+
+}
+
+_obj_revolucion::_obj_revolucion(int etapas){
+	build_revolucion();
+	revolucionar(getVertices(),etapas);//añadir vertices revolucionados al perfil
+
+}
+void _obj_revolucion::build_revolucion(){
+  string name_ply;
+  cout<<"Introduce el path del archivo ply Revolucionado\n";
+  cin>> name_ply;
+  char *path = new char[name_ply.length() + 1];
+  std::cout << name_ply << std::endl;
+  //conversion string-char*
+  strcpy(path, name_ply.c_str());
+  open(path);//si vale 0 es que se ha abierto el archivo en caso contrario -1;
+  read(vertices,caras);
+  delete [] path;
+  close();
+}
+int  _obj_revolucion::getVertices(){
+
+	return vertices.size();
+}
+_vertex3f _obj_revolucion::RotarEjeY(_vertex3f p, double ang){//rotar vertice de i
+	_vertex3f rot;
+	rot.x=cos(ang)*p.x+sin(ang)*p.z;
+	rot.y=p.y;
+	rot.z=-sin(ang)*p.x+cos(ang)*p.z;
+	return rot;
+}
+void _obj_revolucion::revolucionar(int v_inicial, int etapas)//m numero de veces que quiero mover el perfil
+{
+	int v_final,i=0,j=0;
+	cout<<"v_ini "<<v_inicial<<endl;
+	v_final=v_inicial*etapas-v_inicial; //no se pintal de nuevo los iniciales por eso resto m
+	double angulo=M_PI/etapas;//EN radianes 360/m
+	for(i=0;i<v_final;i++){
+
+		vertices.push_back(RotarEjeY(vertices.at(i),angulo));//añadimos al vector de vertices  los nuevos vertices que salen de la rotacion
+	}
+
+	_vertex3i car;
+
+	v_final=vertices.size();
+	cout<<"v_fin "<<v_final<<endl;
+
+
+	for(i=0;i<v_final;i+=v_inicial){
+		for(j=i;j<i-1+v_inicial;j++){
+				//los que sean tapas no se revolucionan
+			car.x=(v_inicial+j)%v_final;
+			car.y=j%v_final;
+			car.z=(v_inicial+j+1)%v_final;//cara abajo +
+											  											//	 +  +
+
+			caras.push_back(car);
+
+			car.x=j%v_final;
+			car.y=(j+1)%v_final;
+			car.z=(v_inicial+j+1)%v_final;//cara encima +  +
+											      											//	+
+
+			caras.push_back(car);
+		}
+
+	}
+
+//hacer las tapas
+
+	if(vertices[0].x!=0.0 || vertices[0].z!=0.0){//detecto si hay tapa arriba
+		_vertex3f tapa_sup;
+		tapa_sup.x=0.0;
+		tapa_sup.y=vertices[v_inicial-1].y;
+		tapa_sup.z=0.0;
+		vertices.push_back(tapa_sup);
+
+		int aux_final_Tapas=vertices.size();
+		cout<<"numero de vertices con tapas arriba: "<<aux_final_Tapas<<endl;
+
+		//caras arriba
+		for(int k=v_inicial-1;k<v_final;k+=v_inicial){
+			car.x=k%(v_final);
+			car.y=(k+v_inicial)%(v_final);
+			car.z=aux_final_Tapas-1;
+			cout<<"cara "<<car.x<<","<<car.y<<","<<car.z<<endl;
+			caras.push_back(car);
+		}
+
+	}
+	if(vertices[v_inicial].x!=0.0 || vertices[v_inicial].z!=0.0){//detecto si hay tapa abajo
+		_vertex3f tapa_inf;
+		tapa_inf.x=0.0;
+		tapa_inf.y=vertices[0].y;
+		tapa_inf.z=0.0;
+		vertices.push_back(tapa_inf);
+
+		int aux_final_Tapas=vertices.size();//numero de vertices + vertices tapas
+		cout<<"numero de vertices con tapas abajo : "<<aux_final_Tapas<<endl;
+		//caras abajo
+		for(int k=0;k<v_final;k+=v_inicial){
+
+			car.x=k%(v_final);
+			car.y=(k+v_inicial)%(v_final);
+			car.z=aux_final_Tapas-1;
+			cout<<"cara "<<car.x<<","<<car.y<<","<<car.z<<endl;
+			caras.push_back(car);
+		}
+
+
+
+	}
+}
+//CONSTRUYENDO BARRIDO
+_obj_barrido::_obj_barrido(){
+
+}
+_obj_barrido::_obj_barrido(int etapas,_vertex3f transform){
+	build_barrido();
+	makeBarrido(getVertices(),transform,etapas);//añadir vertices revolucionados al perfil
+
+}
+void _obj_barrido::build_barrido(){
+  string name_ply;
+  cout<<"Introduce el path del archivo ply de barrido\n";
+  cin>> name_ply;
+  char *path = new char[name_ply.length() + 1];
+  std::cout << name_ply << std::endl;
+  //conversion string-char*
+  strcpy(path, name_ply.c_str());
+  open(path);//si vale 0 es que se ha abierto el archivo en caso contrario -1;
+  read(vertices,caras);
+  delete [] path;
+  close();
+}
+int  _obj_barrido::getVertices(){
+
+	return vertices.size();
+}
+
+_vertex3f _obj_barrido::transformar(_vertex3f transform,_vertex3f p) {//el actual más la transformacion
+  	_vertex3f res;
+  	res.x=p.x+transform.x;
+  	res.y=p.y+transform.y;
+  	res.z=p.z+transform.z;
+    return res;
+}
+/* Funciones no implementadas
+
+void obj_barrido::doLateral(int pos_ini,bool inclinado){
+	_vertex3i car;
+	car.x=pos_ini;
+	car.y=pos_ini+v_ini;
+	car.z=car.y/2;//si es impar no vale hay que sumar1
+	caras.push_back(car);
+	if(inclinado=false){
+		pos_ini+=2;
+		car.x=pos_ini;
+		car.y=pos_ini*2+1;
+		car.z=car.y+2;
+	}else{
+		pos_ini++;
+		car.x=pos_ini;
+		car.y=pos_ini*2;
+		car.z=car.y+1;//con lateral derecho no funciona
+	}
+
+	caras.push_back(car);
+}
+void obj_barrido::doBase(int pos_ini){
+	_vertex3i car;
+	car.x=pos_ini;
+	car.y=pos_ini+v_ini;
+	car.z=car.y-v_ini+1;
+	caras.push_back(car);
+	pos_ini--;
+	if(pos_ini>=0){
+		car.x=pos_ini;
+		car.y=v_ini+1+pos_ini;
+		car.z=car.y-1;
+		caras.push_back(car);
+	}
+
+}*/
+void _obj_barrido::makeBarrido(int v_inicial,_vertex3f transform,int etapas) {
+	int v_final=v_inicial*etapas,i=0,j=0;
+	for(i=0;i<v_final;i++){
+		vertices.push_back(transformar(transform,vertices.at(i)));//añadimos al vector de vertices  los nuevos vertices que salen de la rotacion
+
+		_vertex3i car;
+
+		v_final=vertices.size();
+		cout<<"v_fin "<<v_final<<endl;
+
+
+	}
+}
