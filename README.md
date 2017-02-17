@@ -1,8 +1,8 @@
 #PRACTICAS usando librería OPENGL
-##Practica 1: Figuras cubo y piramide (modo dibujado ajedrez,aristas,puntos,solido)
-##Práctica 2: Modelo por revolucion y Objeto_ply
-##Práctica 3: Modelo jerarquico
-##Practica 4: Objetos iluminados por caras y vertices, objetos con texturas
+###Practica 1: Figuras cubo y piramide (modo dibujado ajedrez,aristas,puntos,solido)
+###Práctica 2: Modelo por revolucion y Objeto_ply
+###Práctica 3: Modelo jerarquico
+###Practica 4: Objetos iluminados por caras y vertices, objetos con texturas
 Antonio Guzmán Martín
 
 Cuando se ejecuta ./practica1
